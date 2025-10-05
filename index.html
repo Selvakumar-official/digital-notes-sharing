@@ -47,7 +47,7 @@ section {
 section.active {
     display: block;
 }
-input, select, textarea {
+input, select {
     width: 100%;
     padding: 10px;
     margin: 10px 0;
@@ -113,8 +113,8 @@ th, td {
     <!-- Student Section -->
     <section id="student">
         <h3>Available Notes</h3>
-        <select id="studentSubject" onchange="filterNotes()">
-            <option value="">Select Subject</option>
+        <select id="studentSubject" onchange="fetchNotes()">
+            <option value="">All Subjects</option>
             <option value="Math">Math</option>
             <option value="Science">Science</option>
             <option value="English">English</option>
@@ -130,7 +130,7 @@ th, td {
                 </tr>
             </thead>
             <tbody>
-                <!-- Notes will be listed here -->
+                <!-- Notes loaded from backend -->
             </tbody>
         </table>
     </section>
@@ -141,64 +141,51 @@ th, td {
 function showTab(tab) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
-
     document.querySelector(`[onclick="showTab('${tab}')"]`).classList.add('active');
     document.getElementById(tab).classList.add('active');
-}
 
-// Simulate storage (for demo; will connect to backend later)
-let notes = [];
+    if(tab === 'student') fetchNotes(); // Load notes when student tab is opened
+}
 
 // Teacher uploads note
-function uploadNote() {
-    const name = document.getElementById('teacherName').value;
-    const email = document.getElementById('teacherEmail').value;
-    const subject = document.getElementById('subject').value;
-    const title = document.getElementById('noteTitle').value;
-    const fileInput = document.getElementById('noteFile');
+async function uploadNote() {
+    const form = document.getElementById('uploadForm');
+    const formData = new FormData(form);
 
-    if(!name || !email || !subject || !title || fileInput.files.length === 0){
-        alert("Please fill all fields and select a file.");
-        return;
+    try {
+        const res = await fetch("notes", { method: "POST", body: formData });
+        const text = await res.text();
+        document.getElementById('uploadStatus').innerText = text;
+        form.reset();
+    } catch(err) {
+        document.getElementById('uploadStatus').innerText = "Upload failed!";
+        console.error(err);
     }
-
-    const file = fileInput.files[0];
-
-    // Add to notes array
-    notes.push({
-        teacher: name,
-        email: email,
-        subject: subject,
-        title: title,
-        fileName: file.name
-    });
-
-    document.getElementById('uploadStatus').innerText = "Note uploaded successfully!";
-    document.getElementById('uploadForm').reset();
-    populateNotesTable();
 }
 
-// Populate notes table
-function populateNotesTable() {
-    const tbody = document.querySelector('#notesTable tbody');
-    tbody.innerHTML = '';
-    notes.forEach(note => {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td>${note.title}</td><td>${note.teacher}</td><td>${note.subject}</td><td><a href="#">${note.fileName}</a></td>`;
-        tbody.appendChild(row);
-    });
-}
-
-// Filter notes by subject
-function filterNotes() {
+// Fetch notes from backend
+async function fetchNotes() {
     const subject = document.getElementById('studentSubject').value;
-    const tbody = document.querySelector('#notesTable tbody');
-    tbody.innerHTML = '';
-    notes.filter(note => note.subject === subject || subject === '').forEach(note => {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td>${note.title}</td><td>${note.teacher}</td><td>${note.subject}</td><td><a href="#">${note.fileName}</a></td>`;
-        tbody.appendChild(row);
-    });
+    let url = "notes";
+    if(subject) url += "?subject=" + encodeURIComponent(subject);
+
+    try {
+        const res = await fetch(url);
+        const notes = await res.json();
+        const tbody = document.querySelector('#notesTable tbody');
+        tbody.innerHTML = '';
+
+        notes.forEach(note => {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${note.title}</td>
+                             <td>${note.teacher}</td>
+                             <td>${note.subject}</td>
+                             <td><a href="uploads/${note.file}" target="_blank">Download</a></td>`;
+            tbody.appendChild(row);
+        });
+    } catch(err) {
+        console.error(err);
+    }
 }
 </script>
 
