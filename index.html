@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Notes Sharing System</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f2f5;
+    margin: 0;
+    padding: 0;
+}
+.container {
+    max-width: 900px;
+    margin: 30px auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+nav {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+nav button {
+    padding: 10px 20px;
+    margin: 0 10px;
+    cursor: pointer;
+    border: none;
+    background: #007BFF;
+    color: #fff;
+    border-radius: 5px;
+}
+nav button.active {
+    background: #0056b3;
+}
+section {
+    display: none;
+}
+section.active {
+    display: block;
+}
+input, select, textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+button.submit {
+    width: 100%;
+    padding: 12px;
+    background: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+button.submit:hover {
+    background: #218838;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+table, th, td {
+    border: 1px solid #ccc;
+}
+th, td {
+    padding: 10px;
+    text-align: left;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Digital Notes Sharing System</h2>
+
+    <nav>
+        <button class="tab-btn active" onclick="showTab('teacher')">Teacher Upload</button>
+        <button class="tab-btn" onclick="showTab('student')">Student Notes</button>
+    </nav>
+
+    <!-- Teacher Section -->
+    <section id="teacher" class="active">
+        <h3>Upload Notes</h3>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="text" id="teacherName" placeholder="Your Name" required>
+            <input type="email" id="teacherEmail" placeholder="Your Email" required>
+            <select id="subject" required>
+                <option value="">Select Subject</option>
+                <option value="Math">Math</option>
+                <option value="Science">Science</option>
+                <option value="English">English</option>
+                <option value="Computer">Computer</option>
+            </select>
+            <input type="text" id="noteTitle" placeholder="Note Title" required>
+            <input type="file" id="noteFile" accept=".pdf,.doc,.docx,.txt" required>
+            <button type="button" class="submit" onclick="uploadNote()">Upload Note</button>
+        </form>
+        <div id="uploadStatus"></div>
+    </section>
+
+    <!-- Student Section -->
+    <section id="student">
+        <h3>Available Notes</h3>
+        <select id="studentSubject" onchange="filterNotes()">
+            <option value="">Select Subject</option>
+            <option value="Math">Math</option>
+            <option value="Science">Science</option>
+            <option value="English">English</option>
+            <option value="Computer">Computer</option>
+        </select>
+        <table id="notesTable">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Teacher</th>
+                    <th>Subject</th>
+                    <th>File</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Notes will be listed here -->
+            </tbody>
+        </table>
+    </section>
+</div>
+
+<script>
+// Tab switching
+function showTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
+
+    document.querySelector(`[onclick="showTab('${tab}')"]`).classList.add('active');
+    document.getElementById(tab).classList.add('active');
+}
+
+// Simulate storage (for demo; will connect to backend later)
+let notes = [];
+
+// Teacher uploads note
+function uploadNote() {
+    const name = document.getElementById('teacherName').value;
+    const email = document.getElementById('teacherEmail').value;
+    const subject = document.getElementById('subject').value;
+    const title = document.getElementById('noteTitle').value;
+    const fileInput = document.getElementById('noteFile');
+
+    if(!name || !email || !subject || !title || fileInput.files.length === 0){
+        alert("Please fill all fields and select a file.");
+        return;
+    }
+
+    const file = fileInput.files[0];
+
+    // Add to notes array
+    notes.push({
+        teacher: name,
+        email: email,
+        subject: subject,
+        title: title,
+        fileName: file.name
+    });
+
+    document.getElementById('uploadStatus').innerText = "Note uploaded successfully!";
+    document.getElementById('uploadForm').reset();
+    populateNotesTable();
+}
+
+// Populate notes table
+function populateNotesTable() {
+    const tbody = document.querySelector('#notesTable tbody');
+    tbody.innerHTML = '';
+    notes.forEach(note => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${note.title}</td><td>${note.teacher}</td><td>${note.subject}</td><td><a href="#">${note.fileName}</a></td>`;
+        tbody.appendChild(row);
+    });
+}
+
+// Filter notes by subject
+function filterNotes() {
+    const subject = document.getElementById('studentSubject').value;
+    const tbody = document.querySelector('#notesTable tbody');
+    tbody.innerHTML = '';
+    notes.filter(note => note.subject === subject || subject === '').forEach(note => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${note.title}</td><td>${note.teacher}</td><td>${note.subject}</td><td><a href="#">${note.fileName}</a></td>`;
+        tbody.appendChild(row);
+    });
+}
+</script>
+
+</body>
+</html>
